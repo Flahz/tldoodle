@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tldoodle</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='9' r='6.5' fill='white' stroke='black' stroke-width='2'/%3E%3Cpath d='M16 15.5v8M16 18l-6 4M16 18l6-4M16 23.5l-5 7M16 23.5l5 7' stroke='black' stroke-width='2' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light dark;
+    --paper: #fbf6ec;
+    --card: #fffdf8;
+    --ink: #1f1d1a;
+    --muted: #6d675d;
+    --sun: #ffd166;
+    --sky: #cfe6ff;
+    --mint: #c8eed6;
+    --rose: #ffd5dc;
+    --red: #b42318;
+    --focus: #2f6fed;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #171614;
+      --card: #22201d;
+      --ink: #f2eee6;
+      --muted: #aaa294;
+      --sun: #6e5713;
+      --sky: #1d3a5c;
+      --mint: #1d4a31;
+      --rose: #5a2530;
+      --red: #ff9b93;
+      --focus: #7aa7ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; padding: 28px 16px 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  h1, h2, h3, p { margin: 0; }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .top { display: flex; align-items: center; gap: 14px; }
+  .top svg { width: 60px; height: 60px; flex: none; }
+  .top h1 { font-size: 34px; letter-spacing: -0.02em; }
+  .top p { color: var(--muted); }
+
+  .card { background: var(--card); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 4px 4px 0 var(--ink); padding: 22px; }
+  h2 { font-size: 22px; margin-bottom: 16px; }
+  .banner { background: var(--rose); border: 2px solid var(--ink); border-radius: 14px; padding: 12px 16px; font-weight: 600; }
+  .hint { color: var(--muted); font-size: 14px; margin-top: 8px; }
+  .error { color: var(--red); font-weight: 600; margin-top: 12px; }
+  .hint:empty, .error:empty { display: none; }
+
+  .part + .part { margin-top: 24px; }
+  .part h3 { display: flex; align-items: center; gap: 10px; font-size: 17px; margin-bottom: 10px; }
+  .part h3 b { width: 28px; height: 28px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 50%; background: var(--sun); font-size: 14px; }
+
+  input[type="text"], input[type="number"], textarea { width: 100%; background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; padding: 9px 12px; }
+  textarea { display: block; min-height: 220px; resize: vertical; margin-top: 10px; }
+  textarea.over { background: var(--sky); }
+
+  .formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .format { position: relative; display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 2px solid var(--ink); border-radius: 14px; background: var(--paper); cursor: pointer; }
+  .format input { position: absolute; opacity: 0; pointer-events: none; }
+  .format:has(input:checked) { background: var(--sky); box-shadow: 3px 3px 0 var(--ink); }
+  .format:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .format svg { flex: none; }
+  .format small { display: block; color: var(--muted); }
+  .format .tick { margin-left: auto; flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 8px; background: var(--card); font-weight: 800; }
+  .format:has(input:checked) .tick::before { content: "✓"; }
+  .frame { fill: var(--card); stroke: var(--ink); stroke-width: 2; }
+  .ground { stroke: var(--ink); stroke-width: 1.5; }
+  .head { fill: #fff; stroke: var(--ink); stroke-width: 1.6; }
+  .limbs { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
+
+  .options { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 30px; }
+  .minutes { display: flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+  .minutes input { width: 140px; }
+  .check { display: flex; gap: 10px; max-width: 540px; cursor: pointer; font-weight: 600; }
+  .check input { width: 20px; height: 20px; margin: 2px 0 0; flex: none; accent-color: var(--ink); }
+  .check small { display: block; color: var(--muted); font-weight: 400; }
+
+  .go { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 26px; }
+  .go .hint { margin: 0; }
+  .btn { border: 2px solid var(--ink); border-radius: 999px; background: var(--card); padding: 8px 18px; font-weight: 700; box-shadow: 2px 2px 0 var(--ink); cursor: pointer; }
+  .btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn.big { background: var(--sun); font-size: 18px; padding: 11px 28px; }
+
+  .job-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .job-head h2 { flex: 1; margin: 0; }
+  .steps { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); margin: 22px 0 16px; padding: 0; }
+  .steps li { position: relative; display: grid; justify-items: center; gap: 6px; text-align: center; font-weight: 600; color: var(--muted); }
+  .steps li + li::before { content: ""; position: absolute; top: 19px; right: calc(50% + 26px); width: calc(100% - 52px); border-top: 2px dashed var(--muted); }
+  .dot { width: 40px; height: 40px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); color: var(--ink); font-weight: 800; }
+  .steps .done, .steps .now, .steps .stopped { color: var(--ink); }
+  .steps .done .dot { background: var(--mint); }
+  .steps .now .dot { background: var(--sun); animation: bob 1.2s ease-in-out infinite; }
+  .steps .stopped .dot { background: var(--rose); }
+  @keyframes bob { 50% { transform: translateY(-4px); } }
+  @media (prefers-reduced-motion: reduce) { .steps .now .dot { animation: none; } }
+  .bar { height: 16px; border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--paper); }
+  .bar div { width: 0; height: 100%; background: var(--sun); transition: width 0.5s; }
+  #job-detail { margin-top: 12px; font-weight: 600; }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 600; }
+  pre { max-height: 280px; overflow: auto; margin: 10px 0 0; padding: 12px; background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-word; }
+
+  @media (max-width: 560px) {
+    .top h1 { font-size: 28px; }
+    .card { padding: 18px; }
+    .steps { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="17" r="11" fill="#fff" stroke="currentColor" stroke-width="3"/>
+      <path d="M22 13c3-8 17-8 20 0c-6-3-14-3-20 0z" fill="#c9823a" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="28" cy="18" r="1.6" fill="#1f1d1a"/><circle cx="36" cy="18" r="1.6" fill="#1f1d1a"/>
+      <path d="M28.5 22.5q3.5 2.5 7 0" fill="none" stroke="#1f1d1a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M32 28v17M32 32l-10 7M32 32l10-9M32 45l-8 15M32 45l8 15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>tldoodle</h1>
+      <p>Article too long? Watch it as a stick-figure video instead.</p>
+    </div>
+  </header>
+
+  <p id="banner" class="banner" role="alert" hidden></p>
+
+  <section class="card" id="new">
+    <h2>New video</h2>
+
+    <div class="part">
+      <h3><b>1</b> The article</h3>
+      <input id="paste-name" type="text" placeholder="A short name, e.g. why the sky is blue" aria-label="Article name">
+      <textarea id="paste-text" placeholder="Paste the article's text here, or drop a .md or .txt file anywhere on the page." aria-label="Article text"></textarea>
+      <p class="hint">The name becomes the video's folder in output/. Leave it empty to use the article's first line.</p>
+    </div>
+
+    <div class="part">
+      <h3><b>2</b> The format</h3>
+      <div class="formats">
+        <label class="format">
+          <input type="checkbox" name="screen" value="fullscreen" checked>
+          <svg width="72" height="41" viewBox="0 0 72 41" aria-hidden="true">
+            <rect class="frame" x="1.5" y="1.5" width="69" height="38" rx="5"/>
+            <path class="ground" d="M5 31h62"/>
+            <circle class="head" cx="36" cy="13" r="4.5"/>
+            <path class="limbs" d="M36 17.5v7M36 20l-4.5 3M36 20l4.5-3M36 24.5l-3.5 6.5M36 24.5l3.5 6.5"/>
+          </svg>
+          <span><strong>Fullscreen</strong><small>16:9 · computer, TV, YouTube</small></span>
+          <span class="tick" aria-hidden="true"></span>
+        </label>
+        <label class="format">
+          <input type="checkbox" name="screen" value="phone">
+          <svg width="27" height="48" viewBox="0 0 27 48" aria-hidden="true">
+            <rect class="frame" x="1.5" y="1.5" width="24" height="45" rx="5"/>
+            <path class="ground" d="M4 38h19"/>
+            <circle class="head" cx="13.5" cy="21" r="4.5"/>
+            <path class="limbs" d="M13.5 25.5v6M13.5 28l-4 2.5M13.5 28l4-2.5M13.5 31.5l-3 6.5M13.5 31.5l3 6.5"/>
+          </svg>
+          <span><strong>Phone</strong><small>9:16 · Reels, TikTok, Shorts</small></span>
+          <span class="tick" aria-hidden="true"></span>
+        </label>
+      </div>
+      <p class="hint">Tick both to get both: they share the script and the voice, only the images are drawn again.</p>
+    </div>
+
+    <div class="part">
+      <h3><b>3</b> Options</h3>
+      <div class="options">
+        <label class="minutes">Length <input id="minutes" type="number" min="0.5" max="60" step="0.5" placeholder="auto"> min</label>
+        <label class="check">
+          <input id="now" type="checkbox">
+          <span>Right away, at full price<small>Otherwise OpenAI draws the images in a half-price batch: usually a few minutes, at most 24 hours.</small></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="go">
+      <button id="go" class="btn big" type="button">Generate</button>
+      <p id="estimate" class="hint"></p>
+    </div>
+    <p id="form-error" class="error" role="alert"></p>
+  </section>
+
+  <section class="card" id="job" hidden aria-live="polite">
+    <div class="job-head">
+      <h2 id="job-title"></h2>
+      <button id="reveal" class="btn" type="button">Show in Finder</button>
+      <button id="cancel" class="btn" type="button">Cancel</button>
+      <button id="close" class="btn" type="button">Close</button>
+    </div>
+    <p id="job-what" class="hint"></p>
+    <ol class="steps">
+      <li><span class="dot">1</span>Script</li>
+      <li><span class="dot">2</span>Voice</li>
+      <li><span class="dot">3</span>Images</li>
+      <li><span class="dot">4</span>Video</li>
+    </ol>
+    <div class="bar"><div id="bar"></div></div>
+    <p id="job-detail"></p>
+    <details><summary>Log</summary><pre id="log"></pre></details>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (selector) => document.querySelector(selector);
+const SCREENS = { fullscreen: "Fullscreen", phone: "Phone" };
+const STAGES = ["script", "voice", "images", "video"];
+// how each step starts in the command's output (the prints in __init__.py)
+const STARTS = { "Writing a": "script", "Voicing with": "voice", "Drawing with": "images", "Rendering": "video" };
+const dollars = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+let job = null;      // the video being made, as tldoodle last described it
+let log = [];          // everything the command printed for it so far
+let followed = false;  // whether to show the job (an old finished one stays out of the way)
+let timer;
+
+const esc = (text) => String(text).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const number = (n, digits = 1) => n.toLocaleString("en-US", { maximumFractionDigits: digits });
+const chosenScreens = () => [...document.querySelectorAll("[name=screen]:checked")].map((box) => box.value);
+
+async function api(path, body) {
+  const options = body && { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  let response;
+  try {
+    response = await fetch(path, options);
+  } catch {
+    throw new Error("Can't reach tldoodle anymore: run “uv run tldoodle” again in the terminal.");
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Error ${response.status}`);
+  return data;
+}
+
+function banner(message) {
+  $("#banner").textContent = message;
+  $("#banner").hidden = !message;
+}
+
+function estimate() {
+  const words = $("#paste-text").value.split(/\s+/).filter(Boolean).length;
+  // the command's default length: about half the article's reading time, from 1.5 to 10 minutes
+  const auto = Math.round(Math.min(10, Math.max(1.5, words / 2 / 150)) * 10) / 10;
+  $("#minutes").placeholder = words ? `auto (${number(auto)})` : "auto";
+  const minutes = Number($("#minutes").value) || auto;
+  const screens = chosenScreens().length;
+  const busy = job?.status === "running";
+  $("#go").disabled = busy || !screens;
+  $("#go").textContent = busy ? "A video is being made…" : "Generate";
+  const images = Math.round(minutes * 12);  // about 12 sentences a minute, one image each
+  const price = dollars.format(images * screens * ($("#now").checked ? 0.035 : 0.02));
+  $("#estimate").textContent = !screens ? "Pick at least one format."
+    : !words ? ""
+    : `≈ ${number(minutes)} min of video · ~${images} images${screens > 1 ? " per format" : ""} · ~${price} of images (less if some are already made)`;
+}
+
+async function poll() {
+  clearTimeout(timer);
+  try {
+    const { job: news } = await api(`/api/job?${new URLSearchParams(job ? { id: job.id, log: log.length } : {})}`);
+    banner("");
+    if (news) {
+      if (news.id !== job?.id) log = [];
+      log.push(...news.log);
+      job = news;
+      followed ||= job.status === "running";
+      if (followed) showJob();
+    }
+  } catch (error) {
+    banner(error.message);
+    timer = setTimeout(poll, 3000);
+    return;
+  }
+  if (job?.status === "running") timer = setTimeout(poll, 1000);
+  estimate();
+}
+
+function showJob() {
+  const runs = log.filter((line) => line.startsWith("$ tldoodle")).length;
+  const current = log.slice(log.findLastIndex((line) => line.startsWith("$ tldoodle")) + 1);
+  let stage = "script", done = 0, total = 0, batch = false, sheet = false, match;
+  for (const line of current) {
+    const start = Object.keys(STARTS).find((prefix) => line.startsWith(prefix));
+    if (start) [stage, done, total, batch, sheet] = [STARTS[start], 0, 0, false, false];
+    else if ((match = line.match(/^\s+sentence (\d+)\/(\d+)/))) [done, total] = [+match[1], +match[2]];
+    else if ((match = line.match(/^\s+image \d+\/(\d+)/))) [done, total, sheet] = [done + 1, +match[1], false];
+    else if ((match = line.match(/^\s+batch \w+: (\d+)\/(\d+) images/))) [done, total, batch, sheet] = [+match[1], +match[2], true, false];
+    else if (/^\s+OpenAI batch /.test(line)) [batch, sheet] = [true, false];
+    else if (/^\s+character sheet/.test(line)) sheet = true;
+  }
+  const { status } = job;
+  const step = status === "done" ? STAGES.length : STAGES.indexOf(stage);
+  document.querySelectorAll(".steps li").forEach((li, i) => {
+    li.className = i < step ? "done" : i > step ? "" : status === "running" ? "now" : "stopped";
+    li.querySelector(".dot").textContent =
+      i < step ? "✓" : i > step || status === "running" ? i + 1 : status === "failed" ? "!" : "■";
+  });
+  const within = total ? Math.min(done / total, 1) : 0;
+  const share = status === "done" ? 1 : (Math.max(runs - 1, 0) + (step + within) / STAGES.length) / job.screens.length;
+  $("#bar").style.width = `${Math.round(share * 100)}%`;
+  const which = job.screens.length > 1 ? ` (${runs} of ${job.screens.length})` : "";
+  const made = log.filter((line) => line.startsWith("Done: ")).map((line) => line.split("/").pop());
+  $("#job-title").textContent = { running: "Making it…", done: "It's ready!", failed: "That didn't work", cancelled: "Cancelled" }[status];
+  $("#job-what").textContent = `${job.title} · ${SCREENS[job.screen] ?? job.screen}${which}`;
+  $("#job-detail").textContent =
+    status === "running" ? doing(stage, done, total, batch, sheet)
+    : status === "done" ? `Saved in output/${job.article}/: ${made.join(" and ")}.`
+    : status === "failed" ? log.findLast((line) => line.startsWith("error:")) ?? log.at(-1) ?? ""
+    : "Stopped. Make the same video again to pick up where it left off, without paying twice for what's done.";
+  $("#reveal").dataset.file = made.at(-1) ?? "";
+  $("#reveal").hidden = status !== "done" || !made.length;
+  $("#cancel").hidden = status !== "running";
+  $("#close").hidden = status === "running";
+  const pre = $("#log");
+  const atBottom = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 8;
+  pre.textContent = log.join("\n");
+  if (atBottom) pre.scrollTop = pre.scrollHeight;
+  document.title = status === "running" ? `${Math.round(share * 100)}% · tldoodle` : "tldoodle";
+  $("#job").hidden = false;
+}
+
+function doing(stage, done, total, batch, sheet) {
+  const count = total ? `: ${done} of ${total}` : "";
+  if (stage === "script") return "Claude is writing the script…";
+  if (stage === "voice") return `ElevenLabs is reading the script, sentence by sentence${count}…`;
+  if (stage === "video") return "ffmpeg is putting the video together…";
+  if (sheet) return "OpenAI is drawing the characters first, so they look the same in every image…";
+  if (batch) return `OpenAI is drawing the images in a half-price batch${count}. Usually a few minutes, at most 24 hours: you can close this page, it keeps going.`;
+  return `OpenAI is drawing the images${count}…`;
+}
+
+$("#go").addEventListener("click", async () => {
+  $("#form-error").textContent = "";
+  $("#go").disabled = true;
+  try {
+    const text = $("#paste-text").value;
+    const firstLine = text.split("\n").find((line) => line.trim())?.replace(/^#+/, "").trim() ?? "";
+    const minutes = $("#minutes").value ? Number($("#minutes").value) : null;
+    await api("/api/generate", {
+      name: $("#paste-name").value.trim() || firstLine, text, screens: chosenScreens(), minutes, now: $("#now").checked,
+    });
+    job = null;
+    log = [];
+    followed = true;
+    await poll();
+    $("#job").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    $("#form-error").textContent = error.message;
+  } finally {
+    estimate();
+  }
+});
+
+$("#cancel").addEventListener("click", () => api("/api/cancel", {}).then(poll).catch((error) => banner(error.message)));
+$("#close").addEventListener("click", () => {
+  $("#job").hidden = true;
+  followed = false;
+});
+
+$("#reveal").addEventListener("click", () =>
+  api("/api/reveal", { article: job.article, file: $("#reveal").dataset.file }).catch((error) => banner(error.message)));
+
+$("#minutes").addEventListener("input", estimate);
+$("#now").addEventListener("change", estimate);
+$("#paste-text").addEventListener("input", estimate);
+document.querySelectorAll("[name=screen]").forEach((box) => box.addEventListener("change", estimate));
+
+// a .md or .txt file dropped anywhere on the page becomes the pasted article
+document.addEventListener("dragover", (event) => event.preventDefault());
+document.addEventListener("drop", async (event) => {
+  event.preventDefault();  // never open the dropped file in place of the page
+  $("#paste-text").classList.remove("over");
+  const file = event.dataTransfer?.files[0];
+  if (!file) return;
+  $("#paste-text").value = await file.text();
+  $("#paste-name").value ||= file.name.replace(/\.[^.]+$/, "");
+  estimate();
+});
+$("#paste-text").addEventListener("dragenter", () => $("#paste-text").classList.add("over"));
+$("#paste-text").addEventListener("dragleave", () => $("#paste-text").classList.remove("over"));
+
+if (location.protocol === "file:") {
+  banner("Open this page with “uv run tldoodle” in the tldoodle folder: that's what makes the videos, the page alone can't start anything.");
+  $("#new").hidden = true;
+} else {
+  estimate();
+  poll();
+}
+</script>
+</body>
+</html>

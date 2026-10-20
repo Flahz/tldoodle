@@ -1,0 +1,22 @@
+# Python / uv
+__pycache__/
+*.py[oc]
+.venv
+
+# articles, generated videos, secrets
+articles/
+output/
+*.mp4
+.env
+
+# OS / tooling noise
+.DS_Store
+.omc/
+
+# local machine settings (not shared)
+.claude/settings.local.json
+
+# unreviewed third-party skills (installed via npx skills add)
+.agents/skills/
+.claude/skills/
+skills-lock.json

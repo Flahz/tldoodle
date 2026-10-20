@@ -1,0 +1,17 @@
+[project]
+name = "tldoodle"
+version = "0.2.0"
+description = "Too long; doodled: turn any markdown article into a narrated stick-figure explainer video"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "python-dotenv>=1.0",
+    "requests>=2.32",
+]
+
+[project.scripts]
+tldoodle = "tldoodle:cli"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
